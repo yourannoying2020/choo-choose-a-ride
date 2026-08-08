@@ -1,7 +1,7 @@
 'use client';
 import {FormEvent,useMemo,useState} from 'react';
 
-const locations=[
+const locations: [string, string[]][] = [
 ['Bristol',['Bristol Temple Meads','Bristol Parkway']],['London',['London Paddington','London Euston',"London King's Cross",'London Waterloo','London Liverpool Street']],
 ['Manchester',['Manchester Piccadilly','Manchester Oxford Road','Manchester Victoria']],['Birmingham',['Birmingham New Street','Birmingham Moor Street','Birmingham Snow Hill']],
 ['Bath',['Bath Spa']],['Cardiff',['Cardiff Central','Cardiff Queen Street']],['Edinburgh',['Edinburgh Waverley','Haymarket']],['Leeds',['Leeds']],['Liverpool',['Liverpool Lime Street','Liverpool South Parkway']]
