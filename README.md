@@ -1,9 +1,5 @@
-# Choo Chose A Ride
+# Choo Chose A Ride v0.2
 
-Next.js starter for a UK train journey search app.
+UK train search interface with location-first From/To inputs, city/station autocomplete, journey filters and responsive results.
 
-## Run
-npm install
-npm run dev
-
-The search UI currently uses sample journeys. Real UK rail timetable, fare and availability data will be connected next.
+The current results are sample data. Next step: connect a real UK rail provider through a server-side search API supporting timetables and fares.
