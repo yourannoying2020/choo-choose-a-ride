@@ -1,5 +1,5 @@
 'use client';
-import {FormEvent,useMemo,useState} from 'react';
+import {FormEvent,useMemo,useRef,useState} from 'react';
 
 const locations: [string, string[]][] = [
 ['Bristol',['Bristol Temple Meads','Bristol Parkway']],['London',['London Paddington','London Euston',"London King's Cross",'London Waterloo','London Liverpool Street']],
@@ -8,10 +8,53 @@ const locations: [string, string[]][] = [
 ];
 
 function Box({label,value,setValue}:{label:string;value:string;setValue:(x:string)=>void}){
- const [open,setOpen]=useState(false);
- const matches=useMemo(()=>locations.filter(x=>x[0].toLowerCase().includes(value.toLowerCase())||(x[1] as string[]).some(s=>s.toLowerCase().includes(value.toLowerCase()))).slice(0,6),[value]);
- return <div className="relative"><span className="mb-2 block text-sm font-semibold">{label}</span><input value={value} onChange={e=>{setValue(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)} className="input" placeholder="City, town or station"/>
- {open&&value&&matches.length>0&&<div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">{matches.map(x=><button type="button" key={x[0]} onClick={()=>{setValue(x[0] as string);setOpen(false)}} className="block w-full px-4 py-3 text-left hover:bg-slate-50"><b>{x[0]}</b><div className="text-xs text-slate-500">{(x[1] as string[]).slice(0,3).join(', ')}</div></button>)}</div>}</div>
+  const [open,setOpen]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [matches,setMatches]=useState<any[]>([]);
+  const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+
+  async function lookup(q:string){
+    if(q.trim().length<2){setMatches([]);setOpen(false);return;}
+    setLoading(true);
+    try{
+      const r=await fetch(`/api/locations?q=${encodeURIComponent(q.trim())}`);
+      const d=await r.json();
+      setMatches(d.locations||[]);
+      setOpen(true);
+    }catch{
+      setMatches([]);
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  return <div className="relative">
+    <span className="mb-2 block text-sm font-semibold">{label}</span>
+    <input
+      value={value}
+      onChange={e=>{
+        const next=e.target.value;
+        setValue(next);
+        setOpen(true);
+        if(timer.current) clearTimeout(timer.current);
+        timer.current=setTimeout(()=>lookup(next),350);
+      }}
+      onFocus={()=>{if(value.trim().length>=2) lookup(value)}}
+      onBlur={()=>setTimeout(()=>setOpen(false),150)}
+      className="input"
+      placeholder="Town, city, postcode or station"
+      autoComplete="off"
+    />
+    {open&&(loading||matches.length>0)&&<div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl">
+      {loading&&<div className="px-4 py-3 text-sm text-slate-500">Searching UK locations…</div>}
+      {!loading&&matches.map((x:any)=><div key={x.id} className="border-b border-slate-100 last:border-0">
+        <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{setValue(x.name);setOpen(false)}} className="block w-full px-4 py-3 text-left hover:bg-slate-50">
+          <b>📍 {x.name}</b><div className="truncate text-xs text-slate-500">{x.label}</div>
+        </button>
+        {(x.stations||[]).slice(0,4).map((s:any)=><button key={s.id} type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{setValue(s.name);setOpen(false)}} className="block w-full border-t border-slate-100 bg-slate-50 px-6 py-2 text-left text-sm hover:bg-slate-100">🚆 {s.name}</button>)}
+      </div>)}
+    </div>}
+  </div>
 }
 
 export default function Home(){
