@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchOjpJourneys } from '@/lib/rail/ojp';
+import { searchJourneys } from '@/lib/rail/free-provider';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-
     const {
       from,
       to,
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const journeys = await searchOjpJourneys({
+    const journeys = await searchJourneys({
       from: String(from),
       to: String(to),
       date: String(date),
@@ -34,13 +33,20 @@ export async function POST(request: NextRequest) {
       maxPrice: Number(maxPrice),
     });
 
-    return NextResponse.json({ journeys, source: 'National Rail OJP' });
+    return NextResponse.json({
+      journeys,
+      source: 'UK open/free rail data',
+    });
   } catch (error) {
     console.error('Rail search failed:', error);
-
-    const message =
-      error instanceof Error ? error.message : 'Rail search failed.';
-
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Rail search is temporarily unavailable.',
+      },
+      { status: 502 }
+    );
   }
 }
